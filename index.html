@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>每日剧本 · SPX / SPY / QQQ</title>
+<style>
+  :root{
+    --bg:#0D1420; --surface:#141E2D; --surface2:#1B2838; --line:#26344A;
+    --text:#E7EEF7; --muted:#8195AD; --faint:#5C6E86;
+    --up:#3DBE8B; --up-dim:rgba(61,190,139,.13);
+    --down:#E76A7E; --down-dim:rgba(231,106,126,.13);
+    --pin:#E8B24A; --pin-dim:rgba(232,178,74,.14);
+    --accent:#6C8CFF;
+    --mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
+    --sans:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:radial-gradient(1200px 600px at 80% -10%, rgba(108,140,255,.08), transparent 60%),var(--bg);
+    color:var(--text);font-family:var(--sans);-webkit-font-smoothing:antialiased;line-height:1.5;padding:clamp(16px,3vw,40px)}
+  .wrap{max-width:1180px;margin:0 auto}
+
+  header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:18px;
+    padding-bottom:18px;border-bottom:1px solid var(--line);margin-bottom:26px}
+  .brand .eyebrow{font:600 11px/1 var(--mono);letter-spacing:.22em;color:var(--accent);text-transform:uppercase}
+  .brand h1{font-size:clamp(26px,4vw,38px);font-weight:760;letter-spacing:-.02em;margin-top:8px}
+  .brand .sub{color:var(--muted);font-size:13px;margin-top:6px}
+  .session{display:flex;gap:10px;flex-wrap:wrap}
+  .pill{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:9px 13px;min-width:96px}
+  .pill .k{font:600 10px/1 var(--mono);letter-spacing:.14em;color:var(--faint);text-transform:uppercase}
+  .pill .v{font-family:var(--mono);font-size:18px;font-weight:600;margin-top:6px}
+  .pill .v small{font-size:11px;color:var(--muted);font-weight:500}
+  .regime{border-color:rgba(232,178,74,.5)} .regime .v{color:var(--pin)}
+  .regime.empty{border-color:var(--line)} .regime.empty .v{color:var(--faint);font-size:12px}
+
+  .meta{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:-12px 0 22px}
+  .badge{display:inline-flex;align-items:center;gap:6px;font:600 10px/1 var(--mono);letter-spacing:.12em;
+    padding:6px 10px;border-radius:999px;text-transform:uppercase}
+  .badge.live{background:var(--up-dim);border:1px solid rgba(61,190,139,.4);color:var(--up)}
+  .badge.sample{background:var(--pin-dim);border:1px solid rgba(232,178,74,.4);color:var(--pin)}
+  .upd{color:var(--faint);font:500 11px/1 var(--mono)}
+
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+  @media(max-width:880px){.grid{grid-template-columns:1fr}}
+
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden;
+    display:flex;flex-direction:column;opacity:0;transform:translateY(10px);
+    animation:rise .5s cubic-bezier(.2,.7,.3,1) forwards}
+  .card:nth-child(2){animation-delay:.08s} .card:nth-child(3){animation-delay:.16s}
+  @keyframes rise{to{opacity:1;transform:none}}
+  @media(prefers-reduced-motion:reduce){.card{animation:none;opacity:1;transform:none}}
+
+  .card-top{padding:16px 18px 14px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;justify-content:space-between}
+  .tkr{font-weight:740;font-size:20px;letter-spacing:-.01em}
+  .tkr small{display:block;font-weight:500;font-size:11px;color:var(--muted);letter-spacing:0;margin-top:2px}
+  .last{text-align:right}
+  .last .price{font-family:var(--mono);font-size:21px;font-weight:600}
+  .last .chg{font-family:var(--mono);font-size:12px;margin-top:2px}
+  .up{color:var(--up)} .down{color:var(--down)} .pin{color:var(--pin)}
+
+  .ladder{position:relative;padding:18px 18px 10px;display:flex;gap:14px}
+  .rail{position:relative;width:52px;flex:none}
+  .track{position:absolute;left:50%;top:0;bottom:0;width:2px;transform:translateX(-50%);
+    background:linear-gradient(var(--down),var(--faint) 50%,var(--up))}
+  .em-band{position:absolute;left:50%;width:30px;transform:translateX(-50%);
+    background:var(--pin-dim);border-top:1px dashed rgba(232,178,74,.5);border-bottom:1px dashed rgba(232,178,74,.5);border-radius:3px}
+  .now{position:absolute;left:50%;width:46px;height:46px;transform:translate(-50%,-50%);
+    border:2px solid var(--text);border-radius:50%;display:grid;place-items:center;background:var(--surface);box-shadow:0 0 0 4px var(--surface)}
+  .now span{font:700 10px/1 var(--mono)}
+  .lvls{flex:1;position:relative;min-height:340px}
+  .lvl{position:absolute;left:0;right:0;transform:translateY(-50%);display:flex;align-items:center;gap:8px}
+  .lvl .tag{font:600 9px/1 var(--mono);letter-spacing:.1em;padding:3px 5px;border-radius:4px;width:30px;text-align:center;flex:none}
+  .lvl .val{font-family:var(--mono);font-size:13px;font-weight:600}
+  .lvl .note{font-size:10px;color:var(--faint);margin-left:auto;text-align:right;max-width:96px;line-height:1.25}
+  .lvl.r .tag{background:var(--down-dim);color:var(--down)}
+  .lvl.s .tag{background:var(--up-dim);color:var(--up)}
+  .lvl.p .tag{background:var(--pin-dim);color:var(--pin)}
+  .lvl.key .val{color:var(--pin)}
+
+  .scen{padding:6px 18px 18px}
+  .scen h3{font:600 11px/1 var(--mono);letter-spacing:.14em;color:var(--faint);text-transform:uppercase;margin:14px 0 10px}
+  .branch{border-left:2px solid var(--line);padding:2px 0 2px 12px;margin-bottom:9px}
+  .branch.bull{border-color:var(--up)} .branch.bear{border-color:var(--down)} .branch.base{border-color:var(--pin)}
+  .branch .h{font-size:12px;font-weight:650;margin-bottom:3px;display:flex;align-items:center;gap:6px}
+  .branch .h .dot{width:7px;height:7px;border-radius:50%}
+  .bull .dot{background:var(--up)} .bear .dot{background:var(--down)} .base .dot{background:var(--pin)}
+  .branch p{font-size:12px;color:var(--muted);line-height:1.55}
+  .branch p b{color:var(--text);font-family:var(--mono);font-weight:600}
+
+  .note-card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px 22px;margin-top:22px}
+  .note-card h2{font-size:15px;font-weight:680;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+  .note-card h2 .ic{color:var(--accent)}
+  details{border-top:1px solid var(--line);padding-top:12px;margin-top:12px}
+  summary{cursor:pointer;font-weight:600;font-size:13px;color:var(--text);outline:none}
+  summary:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:4px}
+  details p,details li{font-size:12.5px;color:var(--muted);line-height:1.65;margin-top:8px}
+  details ul{padding-left:18px}
+  code{font-family:var(--mono);font-size:11.5px;background:var(--surface2);padding:2px 6px;border-radius:5px;color:var(--up)}
+
+  .disclaimer{margin-top:22px;background:var(--down-dim);border:1px solid rgba(231,106,126,.35);border-radius:14px;padding:16px 18px;font-size:12px;color:var(--muted);line-height:1.6}
+  .disclaimer b{color:var(--down)}
+  footer{margin-top:18px;text-align:center;color:var(--faint);font-size:11px;font-family:var(--mono)}
+
+  .state{padding:60px 20px;text-align:center;color:var(--muted)}
+  .state code{display:inline-block;margin-top:10px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="brand">
+      <div class="eyebrow">Daily Playbook · 0DTE</div>
+      <h1>每日剧本</h1>
+      <div class="sub">SPX / SPY / QQQ · 关键价位 · 预期波动 · 情景推演</div>
+    </div>
+    <div class="session">
+      <div class="pill"><div class="k">会话日</div><div class="v" id="sess-date">—</div></div>
+      <div class="pill"><div class="k">VIX</div><div class="v" id="sess-vix">—</div></div>
+      <div class="pill regime" id="sess-regime-pill"><div class="k">Gamma 状态</div><div class="v" id="sess-regime">—</div></div>
+    </div>
+  </header>
+
+  <div class="meta" id="meta"></div>
+
+  <div class="grid" id="grid">
+    <div class="state">载入中…</div>
+  </div>
+
+  <div class="note-card">
+    <h2><span class="ic">∑</span> 这些价位是怎么算出来的</h2>
+    <p style="font-size:13px;color:var(--muted);line-height:1.65">
+      剧本不是预测涨跌,而是把"市场结构"摆出来:在哪些价位上方/下方,大概率会发生什么。所有数字由公式从前一日的高/低/收盘和波动率推导,逻辑透明、可复现。
+    </p>
+    <details>
+      <summary>轴心点(Pivot Points)— R / S 价位</summary>
+      <p>用前一交易日的高(H)、低(L)、收盘(C)算出当日参考价位:</p>
+      <ul>
+        <li><code>PP = (H + L + C) / 3</code> — 当日轴心,多空分界</li>
+        <li><code>R1 = 2·PP − L</code> ，<code>S1 = 2·PP − H</code> — 第一道阻力/支撑</li>
+        <li><code>R2 = PP + (H−L)</code> ，<code>S2 = PP − (H−L)</code> — 第二道,常作"伸展目标"</li>
+      </ul>
+    </details>
+    <details>
+      <summary>预期波动区间(Expected Move)— 金色虚线带</summary>
+      <p>从 VIX 反推当日 ±1σ:<code>当日σ ≈ VIX/100 ÷ √252</code>，<code>预期波动 = 参考价 × 当日σ</code>。金色带约覆盖 68% 概率,带外即"超预期"。</p>
+    </details>
+    <details>
+      <summary>Gamma 状态 — 为什么对 0DTE 最重要(本版尚未接入)</summary>
+      <p><b style="color:var(--up)">正 Gamma</b>:做市商"涨了卖、跌了买"→ 抑制波动 → 倾向<b style="color:var(--pin)">区间震荡、向关键行权价吸附</b>。</p>
+      <p><b style="color:var(--down)">负 Gamma</b>:对冲方向反转 → 放大波动 → 倾向<b>单边趋势、急涨急跌</b>。</p>
+      <p style="color:var(--faint)">精确判断需要期权全链持仓量(OI)。本版(v1)未接入,状态显示"需 GEX 数据"。SPY/QQQ 链相对好拿,SPX 较难/需付费。</p>
+    </details>
+  </div>
+
+  <div class="disclaimer">
+    <b>风险提示 ·</b> 本工具只展示基于技术分析与波动率的市场结构,<b>不构成投资建议</b>,也不是买卖指令。末日期权(0DTE)当日到期、时间价值衰减极快、Gamma 风险极高,可在数分钟内归零。技术价位会被跌穿/突破,情景推演经常落空。是否交易、如何控制仓位与止损,由你自行判断并承担后果。
+  </div>
+
+  <footer id="foot">PLAYBOOK · 数据每交易日自动更新</footer>
+</div>
+
+<script>
+const fmt = (n, d=2) => Number(n).toLocaleString("en-US",{minimumFractionDigits:d,maximumFractionDigits:d});
+
+function ladderLevels(t){
+  return [
+    {tag:"R2", v:t.R2, cls:"r", note:"上行伸展目标"},
+    {tag:"EM↑",v:t.emUp,cls:"r", note:"+1σ 预期上沿"},
+    {tag:"R1", v:t.R1, cls:"r", note:"首道阻力"},
+    {tag:"PP", v:t.PP, cls:"p", note:"轴心 · 多空线"},
+    {tag:"KEY",v:t.key,cls:"p key",note:t.keyNote || "关键行权价"},
+    {tag:"S1", v:t.S1, cls:"s", note:"首道支撑"},
+    {tag:"EM↓",v:t.emDn,cls:"s", note:"−1σ 预期下沿"},
+    {tag:"S2", v:t.S2, cls:"s", note:"下行伸展目标"},
+  ];
+}
+
+function buildCard(t){
+  const cls = t.chg>=0 ? "up" : "down", sign = t.chg>=0 ? "+" : "";
+  const levels = ladderLevels(t);
+  const all = levels.map(l=>l.v).concat([t.ref]);
+  const hi=Math.max(...all), lo=Math.min(...all), pad=(hi-lo)*0.10;
+  const top=hi+pad, bot=lo-pad;
+  const yOf = v => ((top - v)/(top - bot))*100;
+  const lvlHTML = levels.map(l=>`
+    <div class="lvl ${l.cls}" style="top:${yOf(l.v)}%">
+      <span class="tag">${l.tag}</span><span class="val">${fmt(l.v)}</span><span class="note">${l.note}</span>
+    </div>`).join("");
+  const emTop=yOf(t.emUp), emBot=yOf(t.emDn);
+  return `
+  <div class="card">
+    <div class="card-top">
+      <div class="tkr">${t.sym}<small>${t.name}</small></div>
+      <div class="last"><div class="price">${fmt(t.ref)}</div>
+        <div class="chg ${cls}">${sign}${fmt(t.chg)} (${sign}${fmt(t.chgPct)}%)</div></div>
+    </div>
+    <div class="ladder">
+      <div class="rail"><div class="track"></div>
+        <div class="em-band" style="top:${emTop}%;height:${emBot-emTop}%"></div>
+        <div class="now" style="top:${yOf(t.ref)}%"><span>REF</span></div>
+      </div>
+      <div class="lvls">${lvlHTML}</div>
+    </div>
+    <div class="scen">
+      <h3>今日情景树</h3>
+      <div class="branch bull"><div class="h"><span class="dot"></span>看涨路径</div>
+        <p>站稳 <b>${fmt(t.PP)}</b>(轴心)上方 → 上测 <b>${fmt(t.R1)}</b>;有效突破 → 挑战 <b>${fmt(t.R2)}</b> / 预期上沿 <b>${fmt(t.emUp)}</b>。</p></div>
+      <div class="branch base"><div class="h"><span class="dot"></span>震荡 / pin 路径</div>
+        <p>在 <b>${fmt(t.S1)}</b> – <b>${fmt(t.R1)}</b> 之间反复 → 向关键价 <b>${fmt(t.key)}</b> 吸附,高抛低吸、不追单边。</p></div>
+      <div class="branch bear"><div class="h"><span class="dot"></span>看跌路径</div>
+        <p>跌破 <b>${fmt(t.PP)}</b> → 下探 <b>${fmt(t.S1)}</b>;失守 → 滑向 <b>${fmt(t.S2)}</b> / 预期下沿 <b>${fmt(t.emDn)}</b>。</p></div>
+    </div>
+  </div>`;
+}
+
+function render(p){
+  document.getElementById("grid").innerHTML = p.tickers.map(buildCard).join("");
+  document.getElementById("sess-vix").textContent = fmt(p.vix,1);
+  document.getElementById("sess-date").textContent = p.session_date || "—";
+
+  const rp = document.getElementById("sess-regime-pill");
+  const rv = document.getElementById("sess-regime");
+  if(p.regime){ rp.classList.remove("empty"); rv.textContent = p.regime; }
+  else { rp.classList.add("empty"); rv.textContent = "需 GEX 数据"; }
+
+  const isSample = p.data_source === "mock";
+  const upd = new Date(p.generated_at).toLocaleString("zh-CN",{hour12:false});
+  document.getElementById("meta").innerHTML =
+    (isSample
+      ? `<span class="badge sample">● 示例数据</span>`
+      : `<span class="badge live">● 实时 · ${p.data_source}</span>`) +
+    `<span class="upd">更新于 ${upd}</span>`;
+}
+
+fetch("playbook.json?_=" + Date.now())
+  .then(r => { if(!r.ok) throw new Error(r.status); return r.json(); })
+  .then(render)
+  .catch(err => {
+    document.getElementById("grid").innerHTML =
+      `<div class="state">还没有 playbook.json。<br>
+       先在 Actions 里手动跑一次工作流,或本地执行:<br>
+       <code>python scripts/generate_playbook.py --mock</code></div>`;
+    console.error(err);
+  });
+</script>
+</body>
+</html>
